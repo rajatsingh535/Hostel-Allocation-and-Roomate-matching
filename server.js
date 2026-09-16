@@ -1,56 +1,73 @@
+// server.js — Main entry point for the backend
+// This file starts Express, connects to MongoDB, and loads all API routes.
+// Run with: npm start or node server.js
+
 const express = require('express');
 const mongoose = require('mongoose');
-require('dotenv').config(); // Load environment variables from .env file
+const cors = require('cors');
+require('dotenv').config(); // Pull in MONGODB_URI and PORT from .env file
 
 const app = express();
-app.use(express.json()); // Middleware to parse JSON request bodies
 
-// ---------------------------------------------------------
-// MongoDB Connection Setup
-// Team Note: Make sure to add MONGODB_URI in your .env file
-// Format: MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/hostel
-// ---------------------------------------------------------
-const connectDB = async () => {
-    try {
-        const uri = process.env.MONGODB_URI;
-        if (!uri) {
-            console.error('❌ MONGODB_URI is not defined in .env file.');
-            console.error('Please configure your MongoDB credentials!');
-            process.exit(1);
-        }
-        
-        await mongoose.connect(uri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-        console.log('✅ MongoDB Connected Successfully');
-    } catch (error) {
-        console.error('❌ MongoDB Connection Failed:', error.message);
-        process.exit(1);
-    }
+// Allow the Next.js frontend (port 3000) to talk to this backend (port 5000)
+app.use(cors());
+
+// Let Express parse incoming JSON bodies (needed for POST/PUT requests)
+app.use(express.json());
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MONGODB CONNECTION
+// ─────────────────────────────────────────────────────────────────────────────
+// We read the connection string from the .env file so credentials are never
+// hardcoded in source code. If MONGODB_URI is missing, we exit immediately
+// with a clear message so the developer knows what to fix.
+
+const connectToDatabase = async () => {
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    console.error('');
+    console.error('❌  MONGODB_URI is not set!');
+    console.error('    Please create a .env file in the root folder with:');
+    console.error('    MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/hostel_allocation');
+    console.error('    You can get this string from https://cloud.mongodb.com → Connect → Drivers');
+    console.error('');
+    process.exit(1); // Stop the server — there is no point continuing without a DB
+  }
+
+  try {
+    await mongoose.connect(uri);
+    console.log('✅  MongoDB connected successfully');
+  } catch (err) {
+    console.error('❌  MongoDB connection failed:', err.message);
+    process.exit(1);
+  }
 };
 
-// Initialize DB Connection
-connectDB();
+connectToDatabase();
 
-// ---------------------------------------------------------
-// Basic Route for testing
-// ---------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
+// API ROUTES
+// ─────────────────────────────────────────────────────────────────────────────
+// M1 — Hostel & Room Inventory routes (Rajat)
+app.use('/api/inventory', require('./routes/inventory'));
+
+// M2 — Application & Cycle Management routes (Rajat)
+app.use('/api/cycles', require('./routes/cycles'));
+
+// Basic health-check route — useful for deployment monitoring
 app.get('/', (req, res) => {
-    res.send('Hostel Allocation API - Week 5 Milestone Running!');
+  res.json({
+    message: 'Hostel Allocation API is running 🚀',
+    version: '0.1.0 (Week 5 Foundation)',
+    endpoints: ['/api/inventory', '/api/cycles'],
+  });
 });
 
-// ---------------------------------------------------------
-// Placeholder for Inventory Routes (Assigned to Team Member 2)
-// ---------------------------------------------------------
-// app.use('/api/inventory', require('./routes/inventory'));
-
-// ---------------------------------------------------------
-// Placeholder for Application Routes (Assigned to Team Member 3)
-// ---------------------------------------------------------
-// app.use('/api/cycles', require('./routes/cycles'));
-
-const PORT = process.env.PORT || 3000;
+// ─────────────────────────────────────────────────────────────────────────────
+// START SERVER
+// ─────────────────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`🚀  Server running on http://localhost:${PORT}`);
 });

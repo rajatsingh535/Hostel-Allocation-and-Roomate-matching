@@ -1,48 +1,125 @@
+// models/Inventory.js — M1: Hostel & Room Inventory
+// Rajat is responsible for this file (Week 5, M1)
+//
+// This file defines the MongoDB data model for the entire hostel inventory.
+// Structure (top to bottom):
+//   Hostel → contains many Blocks
+//   Block  → contains many Floors
+//   Floor  → contains many Rooms
+//   Room   → contains many Beds
+//
+// Every bed has its own status and accessibility attributes.
+// This bed-level granularity is required by the project spec.
+
 const mongoose = require('mongoose');
 
-// ---------------------------------------------------------
-// Module M1: Hostel & Room Inventory Schemas
-// This fulfills the Week 5 requirement for Inventory DB design
-// ---------------------------------------------------------
-
-// Schema for Bed
-// Represents the lowest level of granularity in the inventory
+// ─────────────────────────────────────────────────────────────────────────────
+// BED — The smallest unit of inventory
+// ─────────────────────────────────────────────────────────────────────────────
 const bedSchema = new mongoose.Schema({
-    bedNumber: { type: String, required: true }, // e.g., 'A', 'B', '1', '2'
-    isOccupied: { type: Boolean, default: false },
-    accessibilityFeatures: [{ type: String }], // e.g., 'Ground Floor', 'Wheelchair Accessible'
-    // allocatedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Student' } // Will be used in later modules
+  bedLabel: {
+    type: String,
+    required: true,
+    // e.g. "A", "B", "1", "2"
+  },
+  isOccupied: {
+    type: Boolean,
+    default: false, // Starts empty; set to true when a student is assigned
+  },
+  isAccessible: {
+    type: Boolean,
+    default: false, // true for wheelchair-accessible beds
+  },
+  accessibilityNotes: {
+    type: String,
+    default: '', // e.g. "Near elevator", "Ground floor", "Extra-wide doorway"
+  },
+  // allocatedTo will be filled in by the Allocation Engine (Module 6, later weeks)
+  // allocatedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Student' }
 });
 
-// Schema for Room
+// ─────────────────────────────────────────────────────────────────────────────
+// ROOM — A room on a floor that contains beds
+// ─────────────────────────────────────────────────────────────────────────────
 const roomSchema = new mongoose.Schema({
-    roomNumber: { type: String, required: true },
-    capacity: { type: Number, required: true },
-    roomType: { type: String }, // e.g., 'AC', 'Non-AC'
-    beds: [bedSchema], // Embed beds inside the room for easier queries
-    status: { type: String, enum: ['Available', 'Maintenance'], default: 'Available' }
+  roomNumber: {
+    type: String,
+    required: true, // e.g. "101", "202A"
+  },
+  roomType: {
+    type: String,
+    enum: ['Single', 'Double', 'Triple', 'Quad'],
+    required: true,
+  },
+  isAirConditioned: {
+    type: Boolean,
+    default: false,
+  },
+  status: {
+    type: String,
+    enum: ['Available', 'Full', 'Maintenance', 'Reserved'],
+    default: 'Available',
+  },
+  beds: [bedSchema], // Each room embeds its beds directly for easy queries
 });
 
-// Schema for Floor
+// ─────────────────────────────────────────────────────────────────────────────
+// FLOOR — A floor within a block
+// ─────────────────────────────────────────────────────────────────────────────
 const floorSchema = new mongoose.Schema({
-    floorNumber: { type: Number, required: true },
-    rooms: [roomSchema] // Embed rooms inside floor
+  floorNumber: {
+    type: Number,
+    required: true, // 0 = ground floor, 1 = first floor, etc.
+  },
+  rooms: [roomSchema],
 });
 
-// Schema for Block
+// ─────────────────────────────────────────────────────────────────────────────
+// BLOCK — A named wing/block within a hostel
+// ─────────────────────────────────────────────────────────────────────────────
 const blockSchema = new mongoose.Schema({
-    blockName: { type: String, required: true }, // e.g., 'North Block'
-    floors: [floorSchema]
+  blockName: {
+    type: String,
+    required: true, // e.g. "North Wing", "Block A"
+  },
+  genderPolicy: {
+    type: String,
+    enum: ['Male', 'Female', 'Co-ed'],
+    required: true, // A block is always gender-designated
+  },
+  floors: [floorSchema],
 });
 
-// Main Schema for Hostel
-const hostelSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    genderPolicy: { type: String, enum: ['Male', 'Female', 'Co-ed'], required: true },
+// ─────────────────────────────────────────────────────────────────────────────
+// HOSTEL — The top-level entity
+// ─────────────────────────────────────────────────────────────────────────────
+const hostelSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true, // e.g. "Saraswati Hostel"
+      unique: true,
+    },
+    genderPolicy: {
+      type: String,
+      enum: ['Male', 'Female', 'Co-ed'],
+      required: true,
+    },
+    totalCapacity: {
+      type: Number,
+      default: 0,
+      // This should be updated whenever beds are added/removed
+    },
+    amenities: {
+      type: [String],
+      default: [], // e.g. ["WiFi", "Laundry", "Gym", "Mess"]
+    },
     blocks: [blockSchema],
-    totalCapacity: { type: Number, default: 0 },
-    amenities: [{ type: String }]
-}, { timestamps: true });
+  },
+  {
+    timestamps: true, // Adds createdAt and updatedAt automatically
+  }
+);
 
 const Hostel = mongoose.model('Hostel', hostelSchema);
 

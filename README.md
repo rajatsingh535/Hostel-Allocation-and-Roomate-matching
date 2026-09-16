@@ -1,67 +1,195 @@
-# P03 – Policy-Driven Hostel Allocation Engine with Roommate Compatibility Matching
+# P03 – Hostel Allocation and Roommate Matching
 
-## 1. Project Overview & Problem Statement
-**Description:** Digitises hostel inventory and the allocation cycle: captures applications, validates eligibility against approved policy, generates a draft allocation, and routes to wardens for review.
-**Problem:** Manual allocation for thousands of applicants using spreadsheets is slow, error-prone, hard to audit, and produces no reviewable record.
-**Objectives:** 
-- Maintain inventory (bed-level granularity).
-- Manage application cycles.
-- Generate constraint-respecting allocations.
+## 🏠 Policy-Driven Hostel Allocation Engine with Roommate Compatibility Matching
 
-**Tech Stack (Track J):** Node.js + MongoDB + Next.js (React)
+**Tech Stack:** Next.js (React) + Node.js (Express) + MongoDB
 
 ---
 
-## 2. Week 5 Foundation Architecture & Routing
+## 📌 Problem Statement
 
-As per the **Week 5 Evaluation — Foundation Review**, we have established the following React/Next.js foundation:
-* **Architecture:** Component-based Next.js App Router structure. Clear separation of Server (Node/Express) and Client (Next.js/React).
-* **Routing:** Implemented `/inventory` (Warden View) and `/application` (Student View).
-* **Rendering & Data:** Core UIs are rendering with mock data to demonstrate state and conditional rendering.
-* **Backend Integration:** MongoDB Schemas and basic Express endpoints are defined.
+Hostel allocation for thousands of students is currently done on spreadsheets — managing capacity, quotas, fee categories, programme conditions, and accessibility all at once. The process is:
+- Slow (takes weeks)
+- Hard to challenge or explain
+- Produces no reviewable or auditable record
 
----
-
-## 3. Team Responsibilities (Week 5 Focus - 2 Modules/Tasks Each)
-
-**1. Rajat (Assigned M1 & M2)**
-* **Task 1: M1 (Hostel & Room Inventory):** Implemented MongoDB schema (`models/Inventory.js`) and the React UI for the Warden Bed Map (`/inventory`).
-* **Task 2: M2 (Application & Cycle Management):** Implemented MongoDB schema (`models/Application.js`) and the React UI for the Student Application form (`/application`).
-
-**2. Team Member 2**
-* **Task 1: Next.js Routing & Layout:** Scaffold the main App Router layout, navigation bar, and page routing logic.
-* **Task 2: Clickable Workflow & Prototypes:** Ensure the primary user journey (Student -> Warden) is linked and demonstrable for the Week 5 review.
-
-**3. Team Member 3**
-* **Task 1: Data Fetching & State:** Set up state management and data fetching patterns (e.g., `useEffect` or React Query) to replace mock data with API calls.
-* **Task 2: Error & Loading States:** Implement visual loading spinners and empty/error states across the application.
-
-**4. Team Member 4**
-* **Task 1: Project Documentation & Architecture Diagrams:** Maintain the ER diagrams, Component Trees, and this README.
-* **Task 2: Milestone Backlog (W9 & W13):** Define the feature backlog for the upcoming weeks (Eligibility Validation, Preference Management, Allocation Engine).
+This system fixes all of that.
 
 ---
 
-## 4. Feature Backlog & Milestones
-* **Week 5 (Current):** Foundation Review (M1, M2 mockups, UI layouts, DB schemas).
-* **Week 9:** M3 (Eligibility), M4 (Preferences), M5 (Questionnaire). Fully connected APIs.
-* **Week 13:** M6 (Allocation Engine), M7 (Warden Review), M8/M9 (Waitlist & Publication).
+## 🗓️ Scope: Week 1 to Week 5 ONLY
+
+This repository contains work **only up to the Week 5 Foundation Review milestone**.
+
+| Milestone | Timeline | What we cover |
+|-----------|----------|---------------|
+| **M0** | Week 1–2 | Discovery, policy capture, project architecture |
+| **M1** | Week 3–5 | Hostel & Room Inventory (Rajat) |
+| **M2** | Week 3–5 | Application & Cycle Management (Rajat) |
 
 ---
 
-## 5. Setup & Run Instructions
+## 👥 Team Division — Week 5 Responsibilities
 
-### Prerequisites
-* Node.js (v18+)
-* MongoDB Atlas or Local instance
+> ✅ = Done by Week 5 | 🔲 = To be picked up
 
-### Backend Setup
-1. `cd` to the root directory.
-2. Run `npm install`.
-3. Create a `.env` file and add: `MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/hostel`
-4. Run `npm start` to boot the Express server.
+### 👤 Rajat — M1 & M2 (Lead + Backend & Frontend Foundation)
+Responsible for the core data models and the two foundational modules that everything else depends on.
 
-### Frontend Setup (Next.js)
-1. `cd frontend`
-2. Run `npm install`
-3. Run `npm run dev` to start the React application.
+- [x] Set up project repo, folder structure, README
+- [x] Set up Express + MongoDB connection (`server.js`)
+- [x] M1: Hostel & Room Inventory MongoDB Schema (`models/Inventory.js`)
+- [x] M2: Application & Cycle MongoDB Schema (`models/Application.js`)
+- [x] M1: Inventory API routes (`/api/inventory`)
+- [x] M2: Application API routes (`/api/cycles`)
+- [x] M1: Warden Bed Map UI Page (`/inventory`)
+- [x] M2: Student Application Form UI Page (`/application`)
+- [x] `.env` setup and MongoDB credential documentation
+
+---
+
+### 👤 Team Member 2 — Routing & Navigation (Frontend)
+Responsible for the Next.js global layout, navigation, and connecting all the pages together.
+
+- [x] Next.js global layout and nav bar (`app/layout.jsx`)
+- [ ] Styled navigation with active link highlighting
+- [ ] Mobile-responsive header (hamburger menu)
+- [ ] Home/dashboard landing page with links to all modules
+
+---
+
+### 👤 Team Member 3 — State Management & Data Fetching
+Responsible for making the UI dynamic — replacing all mock data with real API calls.
+
+- [ ] `useEffect` + `fetch` calls to connect Inventory page to `/api/inventory`
+- [ ] `useEffect` + `fetch` calls to connect Application form to `/api/cycles`
+- [ ] Loading spinner component (reusable)
+- [ ] Error state handling ("Something went wrong" UI)
+- [ ] Empty state handling ("No data yet" UI)
+
+---
+
+### 👤 Team Member 4 — Documentation & Architecture
+Responsible for all written documentation, diagrams, and milestone tracking.
+
+- [ ] ER/data model diagram (Hostel → Block → Room → Bed)
+- [ ] Component tree diagram (Next.js pages and components)
+- [ ] User role & workflow diagram (Student → Warden → Chief Warden)
+- [ ] Feature backlog for Week 9 and Week 13 targets
+- [ ] Written policy-to-rule mapping document (M0 discovery output)
+
+---
+
+## ✅ Week 5 Full Checklist
+
+### 🏗️ Architecture & Design
+- [x] Component tree planned (Inventory, Application, BedMap, ApplicationForm)
+- [x] Data entities identified: Hostel, Block, Room, Bed, AllocationCycle, Application
+- [x] User roles documented (Student, Warden, Chief Warden, Admin, Dean, System Admin)
+- [ ] Architecture diagram (Component Tree image — Team Member 4)
+
+### ⚛️ React Routing & Implementation
+- [x] App starts and renders correctly at `localhost:3000`
+- [x] `/` — Home page
+- [x] `/inventory` — M1 Warden Bed Map (Rajat)
+- [x] `/application` — M2 Student Application Form (Rajat)
+- [x] Props used in `BedMap` (receives `rooms` prop)
+- [x] Conditional rendering used (loading state on inventory page)
+
+### 🔄 Rendering & Data Fetching
+- [x] Mock data renders on the Inventory and Application pages
+- [x] `useState` and `useEffect` used for loading simulation
+- [x] Loading state shown while data "fetches"
+- [ ] Replace mock data with real API calls (Team Member 3)
+
+### 🗄️ Backend & Database
+- [x] Express server running (`server.js`)
+- [x] MongoDB connection configured via `.env`
+- [x] Inventory schema defined (`models/Inventory.js`)
+- [x] Application schema defined (`models/Application.js`)
+- [x] `/api/inventory` GET and POST endpoints
+- [x] `/api/cycles` GET and POST endpoints
+
+### 🛤️ Product Workflow
+- [x] Student can navigate to Application page and fill/submit the form
+- [x] Warden can navigate to Inventory page and see the bed map
+- [ ] Primary workflow end-to-end (Student applies → Warden sees) — Team Member 3
+
+### 📝 Documentation
+- [x] README with problem statement, objectives, scope
+- [x] Setup/run instructions below
+- [x] Team responsibilities and checklist
+- [ ] Architecture diagram (Team Member 4)
+- [ ] Feature backlog for W9 and W13 (Team Member 4)
+
+---
+
+## 🚀 Setup & Run Instructions
+
+### Step 1: Clone the repository
+```bash
+git clone https://github.com/rajatsingh535/Hostel-Allocation-and-Roomate-matching.git
+cd "Hostel Allocation and Roomate matching"
+```
+
+### Step 2: Backend Setup (Express + MongoDB)
+```bash
+npm install
+```
+
+Create a `.env` file in the **root folder**:
+```env
+PORT=5000
+MONGODB_URI=mongodb+srv://<YOUR_USERNAME>:<YOUR_PASSWORD>@cluster0.mongodb.net/hostel_allocation?retryWrites=true&w=majority
+```
+
+> ⚠️ **MongoDB Credentials:** You need a MongoDB Atlas account.
+> 1. Go to [https://cloud.mongodb.com](https://cloud.mongodb.com)
+> 2. Create a free cluster → Click "Connect" → "Drivers"
+> 3. Copy the connection string and paste it as `MONGODB_URI` above
+> 4. Replace `<YOUR_USERNAME>` and `<YOUR_PASSWORD>` with your Atlas credentials
+> 5. **NEVER commit the `.env` file to GitHub** — it is already in `.gitignore`
+
+Start the backend:
+```bash
+npm start
+# Server runs at http://localhost:5000
+```
+
+### Step 3: Frontend Setup (Next.js)
+```bash
+cd frontend
+npm install
+npm run dev
+# App runs at http://localhost:3000
+```
+
+---
+
+## 📁 Project Folder Structure
+
+```
+Hostel Allocation and Roommate Matching/
+├── server.js               ← Express backend entry point (Rajat)
+├── .env                    ← MongoDB credentials (DO NOT COMMIT)
+├── .gitignore
+├── package.json
+├── models/
+│   ├── Inventory.js        ← M1: Hostel, Block, Room, Bed schemas (Rajat)
+│   └── Application.js      ← M2: AllocationCycle, Application schemas (Rajat)
+├── routes/
+│   ├── inventory.js        ← M1: /api/inventory API routes (Rajat)
+│   └── cycles.js           ← M2: /api/cycles API routes (Rajat)
+└── frontend/
+    ├── package.json
+    └── app/
+        ├── layout.jsx      ← Global nav layout (Team Member 2)
+        ├── page.jsx        ← Home page (Team Member 2)
+        ├── inventory/
+        │   └── page.jsx    ← M1: Warden Bed Map page (Rajat)
+        ├── application/
+        │   └── page.jsx    ← M2: Student Application page (Rajat)
+        └── components/
+            ├── BedMap.jsx          ← M1: Visual bed map component (Rajat)
+            └── ApplicationForm.jsx ← M2: Application form component (Rajat)
+```
