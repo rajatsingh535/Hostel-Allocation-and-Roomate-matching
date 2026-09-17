@@ -1,227 +1,322 @@
-// frontend/app/inventory/page.jsx — M1: Warden Inventory Page
-// Rajat is responsible for this page (Week 5, M1)
-//
-// Data flow:
-//   1. Page mounts → calls GET /api/inventory
-//   2. Shows animated spinner while fetching
-//   3. On success → renders stat cards + BedMap
-//   4. On error   → renders ErrorState with retry button
-//   5. On empty   → renders EmptyState with seed button
-//
-// For evaluators: Real API call is wired. If the backend is offline,
-// a fallback to local mock data is shown with a banner.
-
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import BedMap       from '../../components/BedMap';
-import LoadingSpinner from '../../components/LoadingSpinner';
-import ErrorState   from '../../components/ErrorState';
-import EmptyState   from '../../components/EmptyState';
+import { useState } from 'react';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+// Mock room inventory data
+const HOSTEL_INVENTORY = {
+  'BH1': {
+    name: 'Boys Hostel 1',
+    blocks: {
+      'A': {
+        floors: {
+          '1': {
+            rooms: {
+              '101': { beds: [{ id: 'A101B1', status: 'ALLOCATED', student: 'Rajat Singh' }, { id: 'A101B2', status: 'AVAILABLE' }] },
+              '102': { beds: [{ id: 'A102B1', status: 'AVAILABLE' }, { id: 'A102B2', status: 'MAINTENANCE' }] },
+              '103': { beds: [{ id: 'A103B1', status: 'ALLOCATED', student: 'Arjun Kumar' }, { id: 'A103B2', status: 'RESERVED' }] }
+            }
+          },
+          '2': {
+            rooms: {
+              '201': { beds: [{ id: 'A201B1', status: 'AVAILABLE' }, { id: 'A201B2', status: 'AVAILABLE' }] },
+              '202': { beds: [{ id: 'A202B1', status: 'ALLOCATED', student: 'Vikram Shah' }, { id: 'A202B2', status: 'BLOCKED' }] }
+            }
+          }
+        }
+      },
+      'B': {
+        floors: {
+          '1': {
+            rooms: {
+              '101': { beds: [{ id: 'B101B1', status: 'ALLOCATED', student: 'Rohit Sharma' }, { id: 'B101B2', status: 'AVAILABLE' }] },
+              '102': { beds: [{ id: 'B102B1', status: 'AVAILABLE' }, { id: 'B102B2', status: 'AVAILABLE' }] }
+            }
+          }
+        }
+      }
+    }
+  },
+  'BH2': {
+    name: 'Boys Hostel 2',
+    blocks: {
+      'A': {
+        floors: {
+          '1': {
+            rooms: {
+              '101': { beds: [{ id: 'BH2A101B1', status: 'ALLOCATED', student: 'Amit Patel' }, { id: 'BH2A101B2', status: 'ALLOCATED', student: 'Suresh Kumar' }] }
+            }
+          }
+        }
+      }
+    }
+  }
+};
 
-// Fallback mock data (shown only if backend is unreachable)
-const MOCK_ROOMS = [
-  { roomNumber: '101', roomType: 'Double',  beds: [{ id: 'A', status: 'allocated' }, { id: 'B', status: 'available' }] },
-  { roomNumber: '102', roomType: 'Double',  beds: [{ id: 'A', status: 'available' }, { id: 'B', status: 'available' }] },
-  { roomNumber: '103', roomType: 'Triple',  beds: [{ id: 'A', status: 'allocated' }, { id: 'B', status: 'allocated' }, { id: 'C', status: 'maintenance' }] },
-  { roomNumber: '104', roomType: 'Double',  beds: [{ id: 'A', status: 'allocated' }, { id: 'B', status: 'allocated' }] },
-  { roomNumber: '201', roomType: 'Single',  beds: [{ id: 'A', status: 'available' }] },
-  { roomNumber: '202', roomType: 'Double',  beds: [{ id: 'A', status: 'reserved' }, { id: 'B', status: 'allocated' }] },
-  { roomNumber: '203', roomType: 'Triple',  beds: [{ id: 'A', status: 'available' }, { id: 'B', status: 'blocked' }, { id: 'C', status: 'available' }] },
-  { roomNumber: '204', roomType: 'Single',  beds: [{ id: 'A', status: 'allocated' }] },
-];
+const BED_STATUS = {
+  'AVAILABLE': { color: 'bg-green-500', label: 'Available', textColor: 'text-green-700' },
+  'ALLOCATED': { color: 'bg-red-500', label: 'Allocated', textColor: 'text-red-700' },
+  'RESERVED': { color: 'bg-yellow-500', label: 'Reserved', textColor: 'text-yellow-700' },
+  'MAINTENANCE': { color: 'bg-orange-500', label: 'Maintenance', textColor: 'text-orange-700' },
+  'BLOCKED': { color: 'bg-gray-500', label: 'Blocked', textColor: 'text-gray-700' }
+};
 
-// ── Stat card ──────────────────────────────────────────────────────────────────
-function StatCard({ label, value, icon, colorClass }) {
-  return (
-    <div className={`bg-white rounded-xl border ${colorClass} p-5 shadow-sm flex items-center gap-4`}>
-      <div className="text-3xl">{icon}</div>
-      <div>
-        <p className="text-2xl font-extrabold text-gray-900">{value}</p>
-        <p className="text-xs text-gray-500 font-medium">{label}</p>
-      </div>
-    </div>
-  );
-}
+export default function RoomInventoryPage() {
+  const [selectedHostel, setSelectedHostel] = useState('BH1');
+  const [selectedBlock, setSelectedBlock] = useState('A');
+  const [selectedFloor, setSelectedFloor] = useState('1');
+  const [editingBed, setEditingBed] = useState(null);
+  const [newStatus, setNewStatus] = useState('');
 
-// ── Room type filter pill ──────────────────────────────────────────────────────
-function FilterPill({ label, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150
-        ${active
-          ? 'bg-lpu-navy text-white border-lpu-navy shadow'
-          : 'bg-white text-gray-600 border-gray-200 hover:border-lpu-navy hover:text-lpu-navy'
-        }`}
-    >
-      {label}
-    </button>
-  );
-}
+  const currentInventory = HOSTEL_INVENTORY[selectedHostel];
+  const currentBlock = currentInventory?.blocks[selectedBlock];
+  const currentFloor = currentBlock?.floors[selectedFloor];
 
-// ── Main Page ──────────────────────────────────────────────────────────────────
-export default function InventoryPage() {
-  const [rooms,    setRooms]    = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState(null);
-  const [filter,   setFilter]   = useState('All');
-  const [isMock,   setIsMock]   = useState(false);  // true when using fallback data
+  const handleStatusChange = (bedId, status) => {
+    // In real app, this would make API call
+    console.log(`Changing bed ${bedId} to status ${status}`);
+    setEditingBed(null);
+    setNewStatus('');
+  };
 
-  const loadInventory = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setIsMock(false);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/inventory`);
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      const json = await res.json();
-
-      // Flatten nested MongoDB structure → flat room list
-      const flatRooms = [];
-      (json.data || []).forEach((hostel) => {
-        (hostel.blocks || []).forEach((block) => {
-          (block.floors || []).forEach((floor) => {
-            (floor.rooms || []).forEach((room) => {
-              flatRooms.push({
-                roomNumber: `${floor.floorNumber}${room.roomNumber}`,
-                roomType:   room.roomType,
-                beds:       (room.beds || []).map((b) => ({
-                  id:          b.bedLabel || b.id,
-                  status:      b.isOccupied ? 'allocated' : 'available',
-                  isAccessible: b.isAccessible,
-                })),
-              });
+  const getBedStats = () => {
+    const stats = { AVAILABLE: 0, ALLOCATED: 0, RESERVED: 0, MAINTENANCE: 0, BLOCKED: 0 };
+    
+    Object.values(HOSTEL_INVENTORY).forEach(hostel => {
+      Object.values(hostel.blocks).forEach(block => {
+        Object.values(block.floors).forEach(floor => {
+          Object.values(floor.rooms).forEach(room => {
+            room.beds.forEach(bed => {
+              stats[bed.status]++;
             });
           });
         });
       });
+    });
 
-      if (flatRooms.length === 0) {
-        // API returned data but hostel has no rooms yet → use mock
-        setRooms(MOCK_ROOMS);
-        setIsMock(true);
-      } else {
-        setRooms(flatRooms);
-      }
-    } catch (err) {
-      // Backend offline → gracefully fall back to mock data
-      console.warn('Backend unreachable, using mock data:', err.message);
-      setRooms(MOCK_ROOMS);
-      setIsMock(true);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    return stats;
+  };
 
-  useEffect(() => { loadInventory(); }, [loadInventory]);
-
-  // ── Derived stats ────────────────────────────────────────────────────────────
-  const totalBeds       = rooms.reduce((s, r) => s + r.beds.length, 0);
-  const allocatedBeds   = rooms.reduce((s, r) => s + r.beds.filter((b) => b.status === 'allocated' || b.occupied).length, 0);
-  const availableBeds   = rooms.reduce((s, r) => s + r.beds.filter((b) => b.status === 'available').length, 0);
-  const maintenanceBeds = rooms.reduce((s, r) => s + r.beds.filter((b) => b.status === 'maintenance').length, 0);
-  const occupancyPct    = totalBeds ? Math.round((allocatedBeds / totalBeds) * 100) : 0;
-
-  const FILTERS = ['All', 'Single', 'Double', 'Triple', 'Quad'];
+  const bedStats = getBedStats();
 
   return (
-    <div className="animate-fade-in space-y-6">
-
-      {/* ── Page header ──────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-white bg-lpu-navy px-2 py-0.5 rounded">M1</span>
-            <h1 className="text-2xl font-extrabold text-gray-900">Hostel &amp; Room Inventory</h1>
+    <div className="space-y-6">
+      
+      {/* Header */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-lpu-navy mb-2">Room & Bed Inventory</h1>
+            <p className="text-gray-600">
+              Manage hostel hierarchy: Hostel → Block → Floor → Room → Bed
+            </p>
           </div>
-          <p className="text-sm text-gray-500">
-            Warden View · LPU Hostel · Real-time bed occupancy map
-          </p>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span className="font-semibold">Module 3:</span>
+            <span>Warden Hostel & Room Management</span>
+          </div>
         </div>
-
-        {/* Seed button (dev helper) */}
-        <button
-          onClick={async () => {
-            try {
-              await fetch(`${API_BASE}/api/inventory/seed`, { method: 'POST' });
-              loadInventory();
-            } catch {
-              alert('Could not reach backend to seed data.');
-            }
-          }}
-          className="text-xs font-semibold px-4 py-2 rounded-lg bg-lpu-navy text-white hover:bg-lpu-blue transition-colors shadow"
-        >
-          🌱 Seed Demo Data
-        </button>
       </div>
 
-      {/* ── Mock data warning banner ──────────────────────────────────────── */}
-      {isMock && !loading && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-2 text-amber-800 text-sm animate-fade-in">
-          <span className="text-lg">⚠️</span>
+      {/* Overall Statistics */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {Object.entries(bedStats).map(([status, count]) => {
+          const config = BED_STATUS[status];
+          return (
+            <div key={status} className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+              <div className={`w-8 h-8 ${config.color} rounded-full mx-auto mb-2`}></div>
+              <p className="text-2xl font-bold text-gray-900">{count}</p>
+              <p className="text-xs text-gray-600">{config.label}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Navigation Controls */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          {/* Hostel Selection */}
           <div>
-            <strong>Showing demo data</strong>
-            {error && <span className="text-amber-600 ml-1">— backend unreachable: {error}</span>}
-            {!error && <span className="text-amber-600 ml-1">— no rooms in database yet. Click &quot;Seed Demo Data&quot; to populate.</span>}
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Select Hostel
+            </label>
+            <select
+              value={selectedHostel}
+              onChange={(e) => {
+                setSelectedHostel(e.target.value);
+                setSelectedBlock('A');
+                setSelectedFloor('1');
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lpu-gold focus:border-transparent outline-none text-sm bg-white"
+            >
+              {Object.entries(HOSTEL_INVENTORY).map(([id, hostel]) => (
+                <option key={id} value={id}>{hostel.name}</option>
+              ))}
+            </select>
           </div>
-          <button onClick={loadInventory} className="ml-auto text-xs font-semibold underline hover:no-underline">Retry</button>
+
+          {/* Block Selection */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Select Block
+            </label>
+            <select
+              value={selectedBlock}
+              onChange={(e) => {
+                setSelectedBlock(e.target.value);
+                setSelectedFloor('1');
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lpu-gold focus:border-transparent outline-none text-sm bg-white"
+            >
+              {currentInventory && Object.keys(currentInventory.blocks).map(blockId => (
+                <option key={blockId} value={blockId}>Block {blockId}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Floor Selection */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Select Floor
+            </label>
+            <select
+              value={selectedFloor}
+              onChange={(e) => setSelectedFloor(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lpu-gold focus:border-transparent outline-none text-sm bg-white"
+            >
+              {currentBlock && Object.keys(currentBlock.floors).map(floorId => (
+                <option key={floorId} value={floorId}>Floor {floorId}</option>
+              ))}
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Room Layout */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-bold text-gray-900">
+            {currentInventory?.name} - Block {selectedBlock} - Floor {selectedFloor}
+          </h2>
+          <div className="flex items-center gap-4 text-xs">
+            {Object.entries(BED_STATUS).map(([status, config]) => (
+              <div key={status} className="flex items-center gap-1">
+                <div className={`w-3 h-3 ${config.color} rounded-full`}></div>
+                <span>{config.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Rooms Grid */}
+        {currentFloor ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.entries(currentFloor.rooms).map(([roomId, room]) => (
+              <div key={roomId} className="border border-gray-200 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-3 text-center">
+                  Room {roomId}
+                </h3>
+                
+                <div className="space-y-3">
+                  {room.beds.map((bed) => {
+                    const statusConfig = BED_STATUS[bed.status];
+                    
+                    return (
+                      <div
+                        key={bed.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 ${statusConfig.color} rounded-full`}></div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {bed.id}
+                            </p>
+                            {bed.student && (
+                              <p className="text-xs text-gray-600">{bed.student}</p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-semibold ${statusConfig.textColor}`}>
+                            {statusConfig.label}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setEditingBed(bed.id);
+                              setNewStatus(bed.status);
+                            }}
+                            className="text-xs bg-lpu-navy text-white px-2 py-1 rounded hover:bg-lpu-gold transition-colors"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🏠</div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No rooms found</h3>
+            <p className="text-gray-600">
+              No rooms available for the selected hostel, block, and floor.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Status Change Modal */}
+      {editingBed && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Update Bed Status
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Changing status for bed: <span className="font-semibold">{editingBed}</span>
+            </p>
+            
+            <div className="space-y-3 mb-6">
+              {Object.entries(BED_STATUS).map(([status, config]) => (
+                <label key={status} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                  <input
+                    type="radio"
+                    name="status"
+                    value={status}
+                    checked={newStatus === status}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    className="text-lpu-gold focus:ring-lpu-gold"
+                  />
+                  <div className={`w-4 h-4 ${config.color} rounded-full`}></div>
+                  <span className="font-medium">{config.label}</span>
+                </label>
+              ))}
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEditingBed(null)}
+                className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleStatusChange(editingBed, newStatus)}
+                className="flex-1 px-4 py-2 bg-lpu-gold hover:bg-lpu-gold/90 text-white font-semibold rounded-lg transition-colors"
+              >
+                Update Status
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ── Loading ──────────────────────────────────────────────────────── */}
-      {loading && <LoadingSpinner message="Fetching inventory from database…" />}
-
-      {/* ── Main content ─────────────────────────────────────────────────── */}
-      {!loading && (
-        <>
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Total Beds"    value={totalBeds}       icon="🛏️"  colorClass="border-gray-200" />
-            <StatCard label="Allocated"     value={allocatedBeds}   icon="🔴"  colorClass="border-red-200" />
-            <StatCard label="Available"     value={availableBeds}   icon="🟢"  colorClass="border-green-200" />
-            <StatCard label="Maintenance"   value={maintenanceBeds} icon="⚠️"  colorClass="border-yellow-200" />
-          </div>
-
-          {/* Occupancy bar */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-semibold text-gray-700">Overall Occupancy</span>
-              <span className="text-sm font-bold text-lpu-navy">{occupancyPct}%</span>
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-              <div
-                className="h-3 rounded-full bg-gradient-to-r from-lpu-navy to-lpu-gold transition-all duration-700"
-                style={{ width: `${occupancyPct}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-400 mt-1">{allocatedBeds} of {totalBeds} beds occupied</p>
-          </div>
-
-          {/* Room type filters */}
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs font-semibold text-gray-500 mr-1">Filter by type:</span>
-            {FILTERS.map((f) => (
-              <FilterPill key={f} label={f} active={filter === f} onClick={() => setFilter(f)} />
-            ))}
-          </div>
-
-          {/* Bed map */}
-          {rooms.length === 0 ? (
-            <EmptyState
-              icon="🏨"
-              title="No rooms in inventory"
-              message="Click 'Seed Demo Data' above to populate the database with sample hostels, blocks, floors, rooms, and beds."
-            />
-          ) : (
-            <BedMap rooms={rooms} filter={filter} />
-          )}
-        </>
-      )}
     </div>
   );
 }
