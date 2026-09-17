@@ -1,24 +1,15 @@
-// frontend/app/layout.jsx — Global Layout with professional navigation
-// This file wraps every page. It provides:
-//   - LPU-branded top nav bar with active link highlighting
-//   - Mobile responsive hamburger menu
-//   - Consistent page container
-//
-// Next.js App Router requires this at /app/layout.jsx.
-// 'use client' is needed so we can use hooks (usePathname, useState).
-
 'use client';
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import './globals.css';
 
-// Navigation links — update this array to add new pages
+// Navigation links for the unified demo
 const NAV_LINKS = [
-  { href: '/',            label: 'Home',       icon: '🏠' },
-  { href: '/application', label: 'Apply',       icon: '📝' },
-  { href: '/inventory',   label: 'Inventory',   icon: '🗂️' },
-  { href: '/dashboard',   label: 'Dashboard',   icon: '📊' },
+  { href: '/',                      label: 'Home',           icon: '🏠' },
+  { href: '/login',                 label: 'Login (M1)',     icon: '🔐' },
+  { href: '/student/dashboard',     label: 'Student',        icon: '🎓' },
+  { href: '/warden/dashboard',      label: 'Warden',         icon: '🛡️' },
 ];
 
 export default function RootLayout({ children }) {
@@ -29,8 +20,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="description" content="LPU Hostel Allocation & Roommate Matching — Policy-driven allocation engine" />
-        <title>LPU Hostel Allocation</title>
+        <title>Hostel Allocation System</title>
       </head>
 
       <body className="min-h-screen bg-lpu-light flex flex-col">
@@ -47,14 +37,14 @@ export default function RootLayout({ children }) {
                 </div>
                 <div className="hidden sm:block">
                   <p className="text-white font-bold text-sm leading-tight">Hostel Allocation</p>
-                  <p className="text-gray-400 text-xs">P03 – Roommate Matching Platform</p>
+                  <p className="text-gray-400 text-xs">P03 – 8 Modules Enabled</p>
                 </div>
               </a>
 
               {/* Desktop nav links */}
               <nav className="hidden md:flex items-center gap-1">
                 {NAV_LINKS.map(({ href, label, icon }) => {
-                  const active = pathname === href;
+                  const active = pathname === href || pathname.startsWith(href) && href !== '/';
                   return (
                     <a
                       key={href}
@@ -73,22 +63,11 @@ export default function RootLayout({ children }) {
                 })}
               </nav>
 
-              {/* Auth pill (placeholder for Week 5) */}
-              <div className="hidden md:flex items-center gap-2">
-                <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5">
-                  <div className="w-6 h-6 rounded-full bg-lpu-gold flex items-center justify-center text-white text-xs font-bold">
-                    R
-                  </div>
-                  <span className="text-gray-200 text-xs font-medium">Rajat Singh</span>
-                </div>
-              </div>
-
               {/* Mobile hamburger */}
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="md:hidden p-2 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
                 aria-label="Toggle navigation"
-                aria-expanded={menuOpen}
               >
                 {menuOpen ? (
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -138,7 +117,7 @@ export default function RootLayout({ children }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">
               <span>P03 — LPU Hostel Allocation & Roommate Matching Platform</span>
-              <span>Week 5 Foundation Review · M1 + M2 by Rajat Singh</span>
+              <span>8 Modules Architecture Developed</span>
             </div>
           </div>
         </footer>

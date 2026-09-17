@@ -47,15 +47,28 @@ const connectToDatabase = async () => {
 connectToDatabase();
 
 // ─────────────────────────────────────────────────────────────────────────────
-// API ROUTES
+// API ROUTES (8 MODULES ARCHITECTURE)
 // ─────────────────────────────────────────────────────────────────────────────
-// M1 — Hostel & Room Inventory routes (Rajat)
-app.use('/api/inventory', require('./routes/inventory'));
+// M1 — Auth & Roles
+app.use('/api/auth', (req, res) => res.json({ success: true, message: 'Auth endpoint stub' }));
 
-// M2 — Application & Cycle Management routes (Rajat)
+// M2 & M3 — Room Browsing & Management (previously M1 in Week 5)
+app.use('/api/inventory', require('./routes/inventory')); 
+
+// M4 — Applications & Requests (previously M2 in Week 5)
 app.use('/api/cycles', require('./routes/cycles'));
+app.use('/api/requests', (req, res) => res.json({ success: true, message: 'Requests endpoint stub' }));
 
-// Basic health-check route — useful for deployment monitoring
+// M5 — Roommate Matching
+app.use('/api/roommates', (req, res) => res.json({ success: true, message: 'Roommate endpoint stub' }));
+
+// M6 — Asset Inventory
+app.use('/api/assets', (req, res) => res.json({ success: true, message: 'Assets endpoint stub' }));
+
+// M7 — Maintenance & Notifications
+app.use('/api/maintenance', (req, res) => res.json({ success: true, message: 'Maintenance endpoint stub' }));
+
+// Basic health-check route
 app.get('/', (req, res) => {
   res.json({
     message: 'Hostel Allocation API is running 🚀',
