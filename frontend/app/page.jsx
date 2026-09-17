@@ -16,7 +16,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 // ── Role cards ─────────────────────────────────────────────────────────────────
 const ROLES = [
   {
-    href: '/application',
+    href: '/student/application',
     icon: '🎓',
     title: 'I am a Student',
     description: 'Submit your hostel application, rank preferences, and track your allocation status.',
@@ -26,17 +26,17 @@ const ROLES = [
     border: 'border-blue-200 hover:border-blue-400',
   },
   {
-    href: '/inventory',
+    href: '/warden/dashboard',
     icon: '🏠',
     title: 'I am a Warden',
     description: 'View hostel inventory, manage bed occupancy, and review allocation drafts.',
     badge: 'Warden Portal',
     badgeColor: 'bg-green-100 text-green-700',
-    cta: 'Open Inventory →',
+    cta: 'Open Dashboard →',
     border: 'border-green-200 hover:border-green-400',
   },
   {
-    href: '/dashboard',
+    href: '/login',
     icon: '⚙️',
     title: 'I am an Admin',
     description: 'Manage allocation cycles, run the allocation engine, and publish results.',
