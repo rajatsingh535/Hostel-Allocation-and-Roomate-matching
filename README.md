@@ -52,31 +52,31 @@ Responsible for the core data models and the two foundational modules that every
 Responsible for the Next.js global layout, navigation, and connecting all the pages together.
 
 - [x] Next.js global layout and nav bar (`app/layout.jsx`)
-- [ ] Styled navigation with active link highlighting
-- [ ] Mobile-responsive header (hamburger menu)
-- [ ] Home/dashboard landing page with links to all modules
+- [x] Styled navigation with active link highlighting
+- [x] Mobile-responsive header (hamburger menu)
+- [x] Home/dashboard landing page with links to all modules
 
 ---
 
 ### 👤 Team Member 3 — State Management & Data Fetching
 Responsible for making the UI dynamic — replacing all mock data with real API calls.
 
-- [ ] `useEffect` + `fetch` calls to connect Inventory page to `/api/inventory`
-- [ ] `useEffect` + `fetch` calls to connect Application form to `/api/cycles`
-- [ ] Loading spinner component (reusable)
-- [ ] Error state handling ("Something went wrong" UI)
-- [ ] Empty state handling ("No data yet" UI)
+- [x] `useEffect` + `fetch` calls to connect Inventory page to `/api/inventory`
+- [x] `useEffect` + `fetch` calls to connect Application form to `/api/cycles`
+- [x] Loading spinner component (reusable)
+- [x] Error state handling ("Something went wrong" UI)
+- [x] Empty state handling ("No data yet" UI)
 
 ---
 
 ### 👤 Team Member 4 — Documentation & Architecture
 Responsible for all written documentation, diagrams, and milestone tracking.
 
-- [ ] ER/data model diagram (Hostel → Block → Room → Bed)
-- [ ] Component tree diagram (Next.js pages and components)
-- [ ] User role & workflow diagram (Student → Warden → Chief Warden)
-- [ ] Feature backlog for Week 9 and Week 13 targets
-- [ ] Written policy-to-rule mapping document (M0 discovery output)
+- [x] ER/data model diagram (Hostel → Block → Room → Bed)
+- [x] Component tree diagram (Next.js pages and components)
+- [x] User role & workflow diagram (Student → Warden → Chief Warden)
+- [x] Feature backlog for Week 9 and Week 13 targets
+- [x] Written policy-to-rule mapping document (M0 discovery output)
 
 ---
 
@@ -86,7 +86,7 @@ Responsible for all written documentation, diagrams, and milestone tracking.
 - [x] Component tree planned (Inventory, Application, BedMap, ApplicationForm)
 - [x] Data entities identified: Hostel, Block, Room, Bed, AllocationCycle, Application
 - [x] User roles documented (Student, Warden, Chief Warden, Admin, Dean, System Admin)
-- [ ] Architecture diagram (Component Tree image — Team Member 4)
+- [x] Architecture diagram (Component Tree image — Team Member 4)
 
 ### ⚛️ React Routing & Implementation
 - [x] App starts and renders correctly at `localhost:3000`
@@ -100,7 +100,7 @@ Responsible for all written documentation, diagrams, and milestone tracking.
 - [x] Mock data renders on the Inventory and Application pages
 - [x] `useState` and `useEffect` used for loading simulation
 - [x] Loading state shown while data "fetches"
-- [ ] Replace mock data with real API calls (Team Member 3)
+- [x] Replace mock data with real API calls (Team Member 3)
 
 ### 🗄️ Backend & Database
 - [x] Express server running (`server.js`)
@@ -113,14 +113,14 @@ Responsible for all written documentation, diagrams, and milestone tracking.
 ### 🛤️ Product Workflow
 - [x] Student can navigate to Application page and fill/submit the form
 - [x] Warden can navigate to Inventory page and see the bed map
-- [ ] Primary workflow end-to-end (Student applies → Warden sees) — Team Member 3
+- [x] Primary workflow end-to-end (Student applies → Warden sees) — Team Member 3
 
 ### 📝 Documentation
 - [x] README with problem statement, objectives, scope
 - [x] Setup/run instructions below
 - [x] Team responsibilities and checklist
-- [ ] Architecture diagram (Team Member 4)
-- [ ] Feature backlog for W9 and W13 (Team Member 4)
+- [x] Architecture diagram (Team Member 4)
+- [x] Feature backlog for W9 and W13 (Team Member 4)
 
 ---
 

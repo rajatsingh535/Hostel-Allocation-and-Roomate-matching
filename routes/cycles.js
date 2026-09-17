@@ -52,6 +52,24 @@ router.post('/', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GET /api/cycles/active
+// Returns the currently active allocation cycle (Status = Open).
+// Used by the frontend to show the active cycle on the student dashboard.
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/active', async (req, res) => {
+  try {
+    const cycle = await AllocationCycle.findOne({ status: 'Open' }).sort({ createdAt: -1 });
+    if (!cycle) {
+      return res.status(404).json({ success: false, message: 'No active cycle found' });
+    }
+    res.json({ success: true, data: cycle });
+  } catch (err) {
+    console.error('Error fetching active cycle:', err.message);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET /api/cycles/:id/applications
 // Returns all applications submitted for a specific cycle.
 // Wardens use this to review who has applied.

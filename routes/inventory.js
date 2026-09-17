@@ -66,6 +66,61 @@ router.post('/', async (req, res) => {
     console.error('Error creating hostel:', err.message);
     res.status(400).json({ success: false, message: err.message });
   }
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/inventory/seed
+// Development helper: Clears the inventory and seeds it with demo data.
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/seed', async (req, res) => {
+  try {
+    await Hostel.deleteMany({});
+    
+    const demoHostel = new Hostel({
+      name: "Saraswati Hostel",
+      genderPolicy: "Co-ed",
+      totalCapacity: 16,
+      amenities: ["WiFi", "Laundry", "Mess"],
+      blocks: [
+        {
+          blockName: "Block A",
+          genderPolicy: "Co-ed",
+          floors: [
+            {
+              floorNumber: 1,
+              rooms: [
+                {
+                  roomNumber: "101", roomType: "Double", status: "Available", isAirConditioned: true,
+                  beds: [
+                    { bedLabel: "A", isOccupied: true, isAccessible: true },
+                    { bedLabel: "B", isOccupied: false, isAccessible: false }
+                  ]
+                },
+                {
+                  roomNumber: "102", roomType: "Single", status: "Available",
+                  beds: [
+                    { bedLabel: "A", isOccupied: false }
+                  ]
+                },
+                {
+                  roomNumber: "103", roomType: "Triple", status: "Available",
+                  beds: [
+                    { bedLabel: "A", isOccupied: true },
+                    { bedLabel: "B", isOccupied: true },
+                    { bedLabel: "C", isOccupied: false }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    await demoHostel.save();
+    res.json({ success: true, message: 'Demo data seeded successfully', data: demoHostel });
+  } catch (err) {
+    console.error('Error seeding inventory:', err.message);
+    res.status(500).json({ success: false, message: 'Server error while seeding inventory' });
+  }
 });
 
 module.exports = router;
